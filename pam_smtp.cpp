@@ -28,7 +28,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **ar
 
     switch(argc) {
     case 0:
-		pam_syslog(pamh, LOG_ERR, "No option.");
+        pam_syslog(pamh, LOG_ERR, "No option.");
         return PAM_SERVICE_ERR;
     case 1:
         pproto = proto[0];
