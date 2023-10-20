@@ -1,6 +1,6 @@
-//  pam_smtp module
+//  pam_smtp module, v1.0.0
 //
-//  by Martin Young <martin_young@live.cn>
+//  by Martin Young <martin_young@live.cn>, 2023-10-18
 
 #include <string>
 #include <cstring>
