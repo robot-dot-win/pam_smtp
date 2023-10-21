@@ -1,6 +1,6 @@
-//  pam_smtp module, v1.0.0
+//  pam_smtp module, v1.0.1
 //
-//  by Martin Young <martin_young@live.cn>, 2023-10-18
+//  by Martin Young <martin_young@live.cn>, 2023-10-21
 
 #include <string>
 #include <cstring>
@@ -28,7 +28,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **ar
 
     switch(argc) {
     case 0:
-        pam_syslog(pamh, LOG_ERR, "No option.");
+        pam_syslog(pamh, LOG_ERR, "No option");
         return PAM_SERVICE_ERR;
     case 1:
         pproto = proto[0];
@@ -46,16 +46,22 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **ar
         }
     }
 
-    if( (retval=pam_get_item(pamh, PAM_USER, (const void **)&puser)) != PAM_SUCCESS ) return retval;
+    if( (retval=pam_get_item(pamh, PAM_USER, (const void **)&puser)) != PAM_SUCCESS ) {
+        pam_syslog(pamh, LOG_ERR, "Cannot determine username: %s", pam_strerror(pamh, retval));
+        return retval;
+    }
     if( !(puser && *puser) ) {
-        pam_syslog(pamh, LOG_ERR, "Username is empty.");
-        return PAM_AUTH_ERR;
+        pam_syslog(pamh, LOG_ERR, "Cannot determine username");
+        return PAM_SERVICE_ERR;
     }
 
-    if( (retval=pam_get_authtok(pamh, PAM_AUTHTOK, &ppwd, NULL)) != PAM_SUCCESS ) return retval;
+    if( (retval=pam_get_authtok(pamh, PAM_AUTHTOK, &ppwd, NULL)) != PAM_SUCCESS ) {
+        pam_syslog(pamh, LOG_ERR, "Cannot determine password: %s", pam_strerror(pamh, retval));
+        return retval;
+    }
     if( !(ppwd && *ppwd) ) {
-        pam_syslog(pamh, LOG_ERR, "Password is empty.");
-        return PAM_AUTH_ERR;
+        pam_syslog(pamh, LOG_ERR, "Cannot determine password");
+        return PAM_SERVICE_ERR;
     }
 
     Tcurl curl(curl_easy_init());
@@ -77,7 +83,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **ar
     }
 
     if( (clcode=curl_easy_perform(curl.hd)) != CURLE_OK ) {
-        pam_syslog(pamh, LOG_ERR, "Authentication failure: \"%s\"", curl_easy_strerror(clcode));
+        pam_syslog(pamh, LOG_NOTICE, "Access denied: %s", curl_easy_strerror(clcode));
         return PAM_AUTH_ERR;
     }
 
