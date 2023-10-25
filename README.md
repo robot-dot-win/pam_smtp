@@ -7,7 +7,7 @@ No credentials are awarded by this module.
 ## BUILD
 The source program is a single C++11 file.
 
-Dependent packages: pam-devel, libcurl-devel
+Requires: pam-devel, libcurl-devel
 
 ```bash
 $ g++ pam_smtp.cpp -o pam_smtp.so -shared -lpam -lcurl -fPIC
