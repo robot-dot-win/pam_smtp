@@ -17,6 +17,7 @@ $ g++ pam_smtp.cpp -o pam_smtp.so -shared -lpam -lcurl -fPIC
 pam_smtp.so <server[:port]> [starttls|tls] [@domain_name]
 ```
 If ```@domain_name``` is not omitted, ```username``` against the SMTP will be ```PAM_USER@domain_name```.
+
 Example:
 ```
 auth   required   pam_smtp.so   smtp-mail.outlook.com:587  starttls  @live.cn
