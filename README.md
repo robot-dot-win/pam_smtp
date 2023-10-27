@@ -14,12 +14,12 @@ $ g++ pam_smtp.cpp -o pam_smtp.so -shared -lpam -lcurl -fPIC
 ```
 ## USAGE
 ```
-pam_smtp.so <server[:port]> [starttls|tls]
+pam_smtp.so <server[:port]> [starttls|tls] [@domain_name]
 ```
+If ```@domain_name``` is not omitted, ```username``` against the SMTP will be ```PAM_USER@domain_name```.
 Example:
 ```
-auth    required    pam_smtp.so     smtp-mail.outlook.com:587 starttls
+auth   required   pam_smtp.so   smtp-mail.outlook.com:587  starttls  @live.cn
 ```
 ## LICENSE
-
 pam_smtp is licensed under the [GPLv3](LICENSE) license.
