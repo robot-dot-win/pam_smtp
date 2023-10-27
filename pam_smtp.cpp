@@ -1,4 +1,4 @@
-//  pam_smtp module, v1.0.1, 2023-10-21
+//  pam_smtp module, v1.1.0, 2023-10-27
 //
 //  Copyright (C) 2023, Martin Young <martin_young@live.cn>
 //
@@ -28,8 +28,9 @@ using namespace std;
 int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
     int retval;
-    const char *proto[] = {"smtp", "smtps"};
-    const char *puser, *ppwd, *pproto;
+    const char *emptys="";
+    const char *proto[]={"smtp", "smtps"};
+    const char *puser, *ppwd, *pproto, *pdomain;
     long usessl;
     CURLcode clcode;
 
@@ -40,24 +41,47 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **ar
         ~Tcurl() { if(hd) curl_easy_cleanup(hd); }
     };
 
+    auto getproto = [argv,proto] {
+        return  strcmp(argv[1],"starttls")==0? proto[0] :
+               (strcmp(argv[1],"tls"     )==0? proto[1] : nullptr);
+    };
+
     switch(argc) {
     case 0:
         pam_syslog(pamh, LOG_ERR, "No option");
         return PAM_SERVICE_ERR;
-    case 1:
+    case 1:                         // no protocol and domain_name arguments
         pproto = proto[0];
         usessl = CURLUSESSL_NONE;
+        pdomain= emptys;
+        break;
+    case 2:
+        if( argv[1][0]=='@' ) {     // 2nd argument is domain_name, no protocol argument
+            pproto = proto[0];
+            usessl = CURLUSESSL_NONE;
+            pdomain= argv[1];
+        } else {                    // 2nd argument is protocol, no domain_name argument
+            if( !(pproto=getproto()) ) {
+                pam_syslog(pamh, LOG_ERR, "Bad protocol option (starttls|tls): \"%s\"", argv[1]);
+                return PAM_SERVICE_ERR;
+            }
+            usessl = CURLUSESSL_CONTROL;
+            pdomain= emptys;
+        }
         break;
     default:
-        usessl = CURLUSESSL_CONTROL;
-        if( strcmp(argv[1], "starttls")==0 )
-            pproto = proto[0];
-        else if( strcmp(argv[1], "tls")==0 )
-            pproto = proto[1];
-        else {
-            pam_syslog(pamh, LOG_ERR, "Bad option: \"%s\"", argv[1]);
+        if( !(pproto=getproto()) ) {    // 2nd argument is protocol
+            pam_syslog(pamh, LOG_ERR, "Bad protocol option (starttls|tls): \"%s\"", argv[1]);
             return PAM_SERVICE_ERR;
         }
+
+        if( argv[2][0]!='@' ) {         // 3rd argument is domain_name
+            pam_syslog(pamh, LOG_ERR, "Bad domain_name option (no leading '@'): \"%s\"", argv[2]);
+            return PAM_SERVICE_ERR;
+        }
+
+        usessl = CURLUSESSL_CONTROL;
+        pdomain= argv[2];
     }
 
     if( (retval=pam_get_item(pamh, PAM_USER, (const void **)&puser)) != PAM_SUCCESS ) {
@@ -86,7 +110,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **ar
 
     do {
         if( (clcode=curl_easy_setopt(curl.hd, CURLOPT_URL, (string(pproto)+"://"+string(argv[0])).c_str())) != CURLE_OK ) break;
-        if( (clcode=curl_easy_setopt(curl.hd, CURLOPT_USERPWD, (string(puser)+":"+string(ppwd)).c_str())) != CURLE_OK ) break;
+        if( (clcode=curl_easy_setopt(curl.hd, CURLOPT_USERPWD, (string(puser)+string(pdomain)+":"+string(ppwd)).c_str())) != CURLE_OK ) break;
         if( (clcode=curl_easy_setopt(curl.hd, CURLOPT_SSL_VERIFYPEER, 0L)) != CURLE_OK ) break;
         if( (clcode=curl_easy_setopt(curl.hd, CURLOPT_SSL_VERIFYHOST, 0L)) != CURLE_OK ) break;
         if( (clcode=curl_easy_setopt(curl.hd, CURLOPT_USE_SSL, usessl)) != CURLE_OK ) break;
