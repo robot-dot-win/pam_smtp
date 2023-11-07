@@ -1,4 +1,4 @@
-//  pam_smtp module, v1.1.0, 2023-10-27
+//  pam_smtp module, v1.1.1, 2023-11-11
 //
 //  Copyright (C) 2023, Martin Young <martin_young@live.cn>
 //
@@ -16,6 +16,7 @@
 //  along with this program. If not, see <https://www.gnu.org/licenses/>.
 //------------------------------------------------------------------------
 
+#include <memory>
 #include <string>
 #include <cstring>
 #include <syslog.h>
@@ -34,12 +35,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **ar
     long usessl;
     CURLcode clcode;
 
-    struct Tcurl {
-        CURL *hd;
-        Tcurl(): hd(nullptr) {}
-        Tcurl(CURL *p) { hd=p; }
-        ~Tcurl() { if(hd) curl_easy_cleanup(hd); }
-    };
+    auto close_curl_hd = [](CURL *hd) { curl_easy_cleanup(hd); };
 
     auto getproto = [argv,proto] {
         return  strcmp(argv[1],"starttls")==0? proto[0] :
@@ -102,25 +98,25 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **ar
         return PAM_SERVICE_ERR;
     }
 
-    Tcurl curl(curl_easy_init());
-    if( !curl.hd ) {
+    unique_ptr<CURL, decltype(close_curl_hd)> curlhd(curl_easy_init(), close_curl_hd);
+    if( !curlhd ) {
         pam_syslog(pamh, LOG_ERR, "CURL library initialization failure: curl_easy_init()");
         return PAM_SERVICE_ERR;
     }
 
     do {
-        if( (clcode=curl_easy_setopt(curl.hd, CURLOPT_URL, (string(pproto)+"://"+string(argv[0])).c_str())) != CURLE_OK ) break;
-        if( (clcode=curl_easy_setopt(curl.hd, CURLOPT_USERPWD, (string(puser)+string(pdomain)+":"+string(ppwd)).c_str())) != CURLE_OK ) break;
-        if( (clcode=curl_easy_setopt(curl.hd, CURLOPT_SSL_VERIFYPEER, 0L)) != CURLE_OK ) break;
-        if( (clcode=curl_easy_setopt(curl.hd, CURLOPT_SSL_VERIFYHOST, 0L)) != CURLE_OK ) break;
-        if( (clcode=curl_easy_setopt(curl.hd, CURLOPT_USE_SSL, usessl)) != CURLE_OK ) break;
+        if( (clcode=curl_easy_setopt(curlhd.get(), CURLOPT_URL, (string(pproto)+"://"+string(argv[0])).c_str())) != CURLE_OK ) break;
+        if( (clcode=curl_easy_setopt(curlhd.get(), CURLOPT_USERPWD, (string(puser)+string(pdomain)+":"+string(ppwd)).c_str())) != CURLE_OK ) break;
+        if( (clcode=curl_easy_setopt(curlhd.get(), CURLOPT_SSL_VERIFYPEER, 0L)) != CURLE_OK ) break;
+        if( (clcode=curl_easy_setopt(curlhd.get(), CURLOPT_SSL_VERIFYHOST, 0L)) != CURLE_OK ) break;
+        if( (clcode=curl_easy_setopt(curlhd.get(), CURLOPT_USE_SSL, usessl)) != CURLE_OK ) break;
     } while(false);
     if( clcode != CURLE_OK ) {
         pam_syslog(pamh, LOG_ERR, "CURL library function call failure: curl_easy_setopt()");
         return PAM_SERVICE_ERR;
     }
 
-    if( (clcode=curl_easy_perform(curl.hd)) != CURLE_OK ) {
+    if( (clcode=curl_easy_perform(curlhd.get())) != CURLE_OK ) {
         pam_syslog(pamh, LOG_NOTICE, "Access denied: %s", curl_easy_strerror(clcode));
         return PAM_AUTH_ERR;
     }
