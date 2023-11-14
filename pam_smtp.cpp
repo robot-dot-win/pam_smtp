@@ -1,4 +1,4 @@
-//  pam_smtp module, v1.1.1, 2023-11-11
+//  pam_smtp module, v1.1.2, 2023-11-14
 //
 //  Copyright (C) 2023, Martin Young <martin_young@live.cn>
 //
@@ -105,8 +105,8 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **ar
     }
 
     do {
-        if( (clcode=curl_easy_setopt(curlhd.get(), CURLOPT_URL, (string(pproto)+"://"+string(argv[0])).c_str())) != CURLE_OK ) break;
-        if( (clcode=curl_easy_setopt(curlhd.get(), CURLOPT_USERPWD, (string(puser)+string(pdomain)+":"+string(ppwd)).c_str())) != CURLE_OK ) break;
+        if( (clcode=curl_easy_setopt(curlhd.get(), CURLOPT_URL, (pproto+"://"s+argv[0]).c_str())) != CURLE_OK ) break;
+        if( (clcode=curl_easy_setopt(curlhd.get(), CURLOPT_USERPWD, (string(puser)+pdomain+":"s+ppwd).c_str())) != CURLE_OK ) break;
         if( (clcode=curl_easy_setopt(curlhd.get(), CURLOPT_SSL_VERIFYPEER, 0L)) != CURLE_OK ) break;
         if( (clcode=curl_easy_setopt(curlhd.get(), CURLOPT_SSL_VERIFYHOST, 0L)) != CURLE_OK ) break;
         if( (clcode=curl_easy_setopt(curlhd.get(), CURLOPT_USE_SSL, usessl)) != CURLE_OK ) break;
