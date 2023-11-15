@@ -5,12 +5,12 @@ On success it returns PAM_SUCCESS, otherwise it returns PAM_AUTH_ERR, PAM_SERVIC
 
 No credentials are awarded by this module.
 ## BUILD
-The source program is a single C++11 file.
+The source program is a single C++17 file.
 
 Requires: pam-devel, libcurl-devel
 
 ```bash
-$ g++ pam_smtp.cpp -o pam_smtp.so -shared -lpam -lcurl -fPIC
+$ g++ pam_smtp.cpp -o pam_smtp.so -shared -lpam -lcurl -fPIC -std=c++17
 ```
 ## USAGE
 ```
