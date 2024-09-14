@@ -1,4 +1,4 @@
-//  pam_smtp module, v1.1.2, 2023-11-14
+//  pam_smtp module, v1.1.3, 2024-09-14
 //
 //  Copyright (C) 2023, Martin Young <martin_young@live.cn>
 //
@@ -104,14 +104,12 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **ar
         return PAM_SERVICE_ERR;
     }
 
-    do {
-        if( (clcode=curl_easy_setopt(curlhd.get(), CURLOPT_URL, (pproto+"://"s+argv[0]).c_str())) != CURLE_OK ) break;
-        if( (clcode=curl_easy_setopt(curlhd.get(), CURLOPT_USERPWD, (string(puser)+pdomain+":"s+ppwd).c_str())) != CURLE_OK ) break;
-        if( (clcode=curl_easy_setopt(curlhd.get(), CURLOPT_SSL_VERIFYPEER, 0L)) != CURLE_OK ) break;
-        if( (clcode=curl_easy_setopt(curlhd.get(), CURLOPT_SSL_VERIFYHOST, 0L)) != CURLE_OK ) break;
-        if( (clcode=curl_easy_setopt(curlhd.get(), CURLOPT_USE_SSL, usessl)) != CURLE_OK ) break;
-    } while(false);
-    if( clcode != CURLE_OK ) {
+    if( curl_easy_setopt(curlhd.get(), CURLOPT_URL, (pproto+"://"s+argv[0]).c_str()) != CURLE_OK ||
+        curl_easy_setopt(curlhd.get(), CURLOPT_USERPWD, (string(puser)+pdomain+":"s+ppwd).c_str()) != CURLE_OK ||
+        curl_easy_setopt(curlhd.get(), CURLOPT_SSL_VERIFYPEER, 0L) != CURLE_OK  ||
+        curl_easy_setopt(curlhd.get(), CURLOPT_SSL_VERIFYHOST, 0L) != CURLE_OK  ||
+        curl_easy_setopt(curlhd.get(), CURLOPT_USE_SSL, usessl) != CURLE_OK )
+    {
         pam_syslog(pamh, LOG_ERR, "CURL library function call failure: curl_easy_setopt()");
         return PAM_SERVICE_ERR;
     }
