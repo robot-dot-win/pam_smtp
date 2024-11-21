@@ -1,4 +1,4 @@
-//  pam_smtp module, v1.1.3, 2024-09-14
+//  pam_smtp module, v1.1.4, 2024-11-21
 //
 //  Copyright (C) 2023, Martin Young <martin_young@live.cn>
 //
@@ -28,7 +28,6 @@ using namespace std;
 
 int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
-    int retval;
     const char *emptys="";
     const char *proto[]={"smtp", "smtps"};
     const char *puser, *ppwd, *pproto, *pdomain;
@@ -80,7 +79,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **ar
         pdomain= argv[2];
     }
 
-    if( (retval=pam_get_item(pamh, PAM_USER, (const void **)&puser)) != PAM_SUCCESS ) {
+    if( int retval=pam_get_item(pamh, PAM_USER, (const void **)&puser); retval != PAM_SUCCESS ) {
         pam_syslog(pamh, LOG_ERR, "Cannot determine username: %s", pam_strerror(pamh, retval));
         return retval;
     }
@@ -89,7 +88,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **ar
         return PAM_SERVICE_ERR;
     }
 
-    if( (retval=pam_get_authtok(pamh, PAM_AUTHTOK, &ppwd, NULL)) != PAM_SUCCESS ) {
+    if( int retval=pam_get_authtok(pamh, PAM_AUTHTOK, &ppwd, NULL); retval != PAM_SUCCESS ) {
         pam_syslog(pamh, LOG_ERR, "Cannot determine password: %s", pam_strerror(pamh, retval));
         return retval;
     }
