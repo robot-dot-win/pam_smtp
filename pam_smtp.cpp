@@ -1,4 +1,4 @@
-//  pam_smtp module, v1.1.4, 2024-11-21
+//  pam_smtp module, v1.1.5, 2024-11-21
 //
 //  Copyright (C) 2023, Martin Young <martin_young@live.cn>
 //
@@ -32,7 +32,6 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **ar
     const char *proto[]={"smtp", "smtps"};
     const char *puser, *ppwd, *pproto, *pdomain;
     long usessl;
-    CURLcode clcode;
 
     auto close_curl_hd = [](CURL *hd) { curl_easy_cleanup(hd); };
 
@@ -113,7 +112,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **ar
         return PAM_SERVICE_ERR;
     }
 
-    if( (clcode=curl_easy_perform(curlhd.get())) != CURLE_OK ) {
+    if( CURLcode clcode=curl_easy_perform(curlhd.get()); clcode != CURLE_OK ) {
         pam_syslog(pamh, LOG_NOTICE, "Access denied: %s", curl_easy_strerror(clcode));
         return PAM_AUTH_ERR;
     }
