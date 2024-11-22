@@ -1,4 +1,4 @@
-//  pam_smtp module, v1.1.5, 2024-11-21
+//  pam_smtp module, v1.1.5, 2024-11-22
 //
 //  Copyright (C) 2023, Martin Young <martin_young@live.cn>
 //
@@ -28,8 +28,8 @@ using namespace std;
 
 int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
-    const char *emptys="";
-    const char *proto[]={"smtp", "smtps"};
+    const char *emptys{""};
+    const char *proto[]{"smtp", "smtps"};
     const char *puser, *ppwd, *pproto, *pdomain;
     long usessl;
 
