@@ -10,7 +10,7 @@ The source program is a single C++17(and newer) file.
 Requires: pam-devel, libcurl-devel
 
 ```bash
-$ g++ pam_smtp.cpp -o pam_smtp.so -shared -lpam -lcurl -fPIC
+$ g++ -O2 pam_smtp.cpp -o pam_smtp.so -shared -lpam -lcurl -fPIC
 ```
 ## USAGE
 ```
