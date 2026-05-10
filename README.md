@@ -22,5 +22,16 @@ Example:
 ```
 auth   required   pam_smtp.so   smtp-mail.outlook.com:587  starttls  @live.cn
 ```
+## SECURITY CONSIDERATIONS
+**IMPORTANT:** This module disables verification of the SMTP server's TLS certificate (`CURLOPT_SSL_VERIFYPEER` and `CURLOPT_SSL_VERIFYHOST` are both set to 0). This means the connection is vulnerable to man-in-the-middle attacks, and the server's identity is not verified.
+
+This behavior is intentional to maximize ease of use in test or development environments where a trusted certificate may not be available. **You should NOT use this module in production without further modification.**
+
+Before deploying in a production environment, it is strongly recommended that you:
+- Set `CURLOPT_SSL_VERIFYPEER` to `1L` and `CURLOPT_SSL_VERIFYHOST` to `2L`.
+- Provide a trusted CA certificate bundle using `CURLOPT_CAINFO`.
+- Consider enforcing the use of `starttls` or `tls` to guarantee encryption.
+
+This module is provided as open source under the GPLv3 license with no warranty. Users are expected to review and adapt the code to meet their own security requirements.
 ## LICENSE
 pam_smtp is licensed under the [GPLv3](LICENSE) license.
